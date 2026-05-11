@@ -22,7 +22,7 @@ import {
   canStartGame,
   createInitialTokens,
 } from "../../lib/gameEngine"
-import { nanoid } from "nanoid"
+import { randomUUID } from "crypto"
 
 type IoServer = Server<any, any, any, SocketData>
 type IoSocket = Socket<any, any, any, SocketData>
@@ -54,7 +54,7 @@ export async function handleCreateRoom(
   try {
     const code = await generateUniqueRoomCode()
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000)
-    const playerId = nanoid()
+    const playerId = randomUUID()
 
     const [room] = await db
       .insert(rooms)
@@ -203,7 +203,7 @@ export async function handleJoinRoom(
       (s) => !usedSlots.includes(s)
     )!
     const color = SLOT_COLORS[nextSlot]
-    const playerId = nanoid()
+    const playerId = randomUUID()
 
     await db.insert(players).values({
       id: playerId,

@@ -30,15 +30,12 @@ async function main() {
   await app.prepare()
 
   const httpServer = createServer((req, res) => {
-    handle(req, res)
-  })
-
-  // Health check
-  httpServer.on("request", (req, res) => {
     if (req.url === "/api/health" && req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" })
       res.end(JSON.stringify({ status: "ok", timestamp: Date.now() }))
+      return
     }
+    handle(req, res)
   })
 
   const io = new Server(httpServer, {

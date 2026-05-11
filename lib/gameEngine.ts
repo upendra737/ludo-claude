@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid"
 import type { GameState, Player, Token, Color } from "@/types/game"
 import {
   SAFE_SQUARES,

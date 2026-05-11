@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid"
 import { db } from "./db"
 import { rooms } from "../db/schema"
 import { eq } from "drizzle-orm"
@@ -38,7 +37,5 @@ export async function generateUniqueRoomCode(
     }
   }
 
-  // Extremely unlikely but fallback
-  // to a longer code if all retries fail
-  return nanoid(8).toUpperCase()
+  return generateRoomCode() + generateRoomCode().slice(0, 2)
 }
