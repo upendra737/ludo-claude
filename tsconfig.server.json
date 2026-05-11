@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "lib": ["esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": false,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/lib/*": ["./lib/*"],
+      "@/types/*": ["./types/*"],
+      "@/db/*": ["./db/*"],
+      "@/server/*": ["./server/*"]
+    }
+  },
+  "include": [
+    "server.ts",
+    "server-unified.ts",
+    "server/**/*.ts",
+    "lib/**/*.ts",
+    "types/**/*.ts",
+    "db/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "lib/audio.ts",
+    "lib/socket.ts",
+    "store/**",
+    "hooks/**",
+    "components/**",
+    "app/**"
+  ]
+}
