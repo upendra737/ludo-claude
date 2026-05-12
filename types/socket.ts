@@ -59,6 +59,7 @@ export interface ServerToClientEvents {
     code: string
     player: Player
     sessionToken: string
+    gameState: GameState
   }) => void
 
   "room-joined": (payload: {

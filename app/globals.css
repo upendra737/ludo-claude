@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.game-shell {
+  background:
+    linear-gradient(90deg, #e74c3c 0 25%, #27ae60 25% 50%, #f1c40f 50% 75%, #2980b9 75% 100%) top / 100% 8px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 36px 36px,
+    #101114;
+}

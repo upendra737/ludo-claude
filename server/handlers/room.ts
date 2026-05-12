@@ -118,6 +118,7 @@ export async function handleCreateRoom(
       code,
       player,
       sessionToken,
+      gameState: initialGameState,
     })
 
     console.log(`Room ${code} created by ${name}`)

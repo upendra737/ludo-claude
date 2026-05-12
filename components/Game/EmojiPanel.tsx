@@ -25,7 +25,7 @@ export function EmojiPanel({ onSend }: EmojiPanelProps) {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -40, opacity: 0, scale: 0.5 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-xl px-3 py-1.5"
+              className="flex flex-col items-center rounded-lg border border-white/15 bg-zinc-950/90 px-3 py-1.5 shadow-xl backdrop-blur-sm"
             >
               <span className="text-2xl">{r.emoji}</span>
               <span className="text-white/70 text-[10px] font-medium">{r.playerName}</span>
@@ -38,7 +38,7 @@ export function EmojiPanel({ onSend }: EmojiPanelProps) {
       <div className="relative">
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition text-white text-sm font-medium border border-white/20"
+          className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/20 active:scale-95"
         >
           <span>😊</span>
           <span className="hidden sm:inline">React</span>
@@ -53,7 +53,7 @@ export function EmojiPanel({ onSend }: EmojiPanelProps) {
               exit={{ opacity: 0, scale: 0.8, y: 8 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               className="absolute bottom-full mb-2 right-0 bg-gray-900/95 backdrop-blur-sm
-                         border border-white/20 rounded-2xl p-2 grid grid-cols-4 gap-1 shadow-2xl z-40"
+                         border border-white/15 rounded-lg p-2 grid grid-cols-4 gap-1 shadow-2xl z-40"
             >
               {EMOJIS.map((emoji) => (
                 <button
@@ -62,7 +62,7 @@ export function EmojiPanel({ onSend }: EmojiPanelProps) {
                     onSend(emoji)
                     setOpen(false)
                   }}
-                  className="text-2xl p-1.5 rounded-xl hover:bg-white/20 active:scale-90 transition-all"
+                  className="rounded-md p-1.5 text-2xl transition-all hover:bg-white/20 active:scale-90"
                 >
                   {emoji}
                 </button>

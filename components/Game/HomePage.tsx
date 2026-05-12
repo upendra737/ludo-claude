@@ -1,214 +1,217 @@
 'use client'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGame } from '@/hooks/useGame'
 import { useGameStore } from '@/store/gameStore'
+import { unlockAudio } from '@/lib/audio'
+import { Notifications } from './Notifications'
 
 type Mode = 'none' | 'create' | 'join'
+
+const BOARD_COLORS = ['#E74C3C', '#27AE60', '#F1C40F', '#2980B9']
 
 export function HomePage() {
   const { createRoom, joinRoom } = useGame()
   const phase = useGameStore((s) => s.phase)
+  const latestErrorId = useGameStore((s) => {
+    const last = s.notifications.at(-1)
+    return last?.type === 'error' ? last.id : null
+  })
 
   const [mode, setMode] = useState<Mode>('none')
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
 
+  function chooseMode(nextMode: Mode) {
+    void unlockAudio()
+    setMode(nextMode)
+    setLoading(false)
+  }
+
   function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
     setLoading(true)
-    createRoom(name.trim())
+    if (!createRoom(name.trim())) setLoading(false)
   }
 
   function handleJoin(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || code.length < 6) return
     setLoading(true)
-    joinRoom(code.trim(), name.trim())
+    if (!joinRoom(code.trim(), name.trim())) setLoading(false)
   }
 
-  // Reset loading if phase changes back (error)
-  if (phase !== 'home' && loading) setLoading(false)
+  useEffect(() => {
+    if (phase !== 'home') setLoading(false)
+  }, [phase])
+
+  useEffect(() => {
+    if (latestErrorId) setLoading(false)
+  }, [latestErrorId])
+
+  useEffect(() => {
+    if (!loading) return
+    const timeout = window.setTimeout(() => {
+      setLoading(false)
+      useGameStore.getState().addNotification({
+        message: 'The game server did not answer. Please try again.',
+        type: 'error',
+      })
+    }, 12000)
+    return () => window.clearTimeout(timeout)
+  }, [loading])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900
-                    flex flex-col items-center justify-center p-6 overflow-hidden">
-
-      {/* Animated background circles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full opacity-10"
-            style={{
-              width: 200 + i * 80,
-              height: 200 + i * 80,
-              background: ['#E74C3C','#27AE60','#F1C40F','#2980B9','#9B59B6','#E67E22'][i],
-              left: `${10 + i * 15}%`,
-              top: `${5 + i * 12}%`,
-            }}
-            animate={{ y: [0, -20, 0], scale: [1, 1.05, 1] }}
-            transition={{ duration: 4 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Title */}
-        <motion.div
-          initial={{ y: -40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="text-center mb-10"
-        >
-          <div className="text-7xl mb-3">🎲</div>
-          <h1 className="text-5xl font-black text-white tracking-tight">Ludo</h1>
-          <p className="text-white/50 mt-2 text-lg">Multiplayer · Real-time · Fun</p>
-        </motion.div>
-
-        {/* Main card */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
-          className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-7 shadow-2xl"
-        >
-          {mode === 'none' && (
-            <div className="space-y-4">
-              <button
-                onClick={() => setMode('create')}
-                className="w-full py-4 rounded-2xl font-bold text-white text-lg
-                           bg-gradient-to-r from-indigo-500 to-purple-600
-                           hover:from-indigo-400 hover:to-purple-500
-                           active:scale-95 transition-all shadow-lg
-                           flex items-center justify-center gap-3"
-              >
-                <span className="text-2xl">🏠</span> Create Room
-              </button>
-              <button
-                onClick={() => setMode('join')}
-                className="w-full py-4 rounded-2xl font-bold text-white text-lg
-                           bg-gradient-to-r from-emerald-600 to-teal-600
-                           hover:from-emerald-500 hover:to-teal-500
-                           active:scale-95 transition-all shadow-lg
-                           flex items-center justify-center gap-3"
-              >
-                <span className="text-2xl">🚪</span> Join Room
-              </button>
+    <main className="game-shell min-h-screen overflow-hidden px-4 py-6 text-white sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl items-center justify-center">
+        <div className="grid w-full gap-7 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <motion.section
+            initial={{ y: 18, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 22 }}
+            className="mx-auto w-full max-w-md lg:mx-0"
+          >
+            <div className="mb-6 grid aspect-square w-32 grid-cols-2 overflow-hidden rounded-lg border border-white/20 bg-white shadow-2xl shadow-black/35 sm:w-40">
+              {BOARD_COLORS.map((color) => (
+                <div key={color} className="grid place-items-center" style={{ background: color }}>
+                  <div className="h-9 w-9 rounded-lg border-4 border-white/80 bg-white/20 shadow-inner sm:h-11 sm:w-11" />
+                </div>
+              ))}
             </div>
-          )}
+            <p className="mb-3 text-sm font-semibold uppercase text-white/55">Private match</p>
+            <h1 className="text-5xl font-black text-white sm:text-6xl">Ludo</h1>
+            <p className="mt-4 max-w-sm text-base leading-7 text-white/70">
+              Create a room, invite friends, and play the board with real-time turns, dice, and sound.
+            </p>
+          </motion.section>
 
-          {mode === 'create' && (
-            <motion.form
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              onSubmit={handleCreate}
-              className="space-y-4"
-            >
-              <button
-                type="button"
-                onClick={() => setMode('none')}
-                className="text-white/50 hover:text-white text-sm flex items-center gap-1 mb-2 transition"
-              >
-                ← Back
-              </button>
-              <h2 className="text-white font-bold text-xl">Create a New Room</h2>
-              <input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={20}
-                autoFocus
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3
-                           text-white placeholder-white/30 outline-none
-                           focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition"
-              />
-              <button
-                type="submit"
-                disabled={!name.trim() || loading}
-                className={`w-full py-3 rounded-xl font-bold text-white text-base transition-all
-                  ${name.trim() && !loading
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 active:scale-95'
-                    : 'bg-white/10 text-white/30 cursor-not-allowed'}`}
-              >
-                {loading ? 'Creating…' : '🏠 Create Room'}
-              </button>
-            </motion.form>
-          )}
+          <motion.section
+            initial={{ y: 22, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.08, type: 'spring', stiffness: 180, damping: 22 }}
+            className="mx-auto w-full max-w-md rounded-lg border border-white/15 bg-zinc-950/90 p-5 shadow-2xl shadow-black/40 backdrop-blur"
+          >
+            {mode === 'none' && (
+              <div className="space-y-3">
+                <button
+                  onClick={() => chooseMode('create')}
+                  className="group flex w-full items-center justify-between rounded-lg border border-red-300/30 bg-red-500 px-4 py-4 text-left font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-400 active:scale-[0.98]"
+                >
+                  <span>Create Room</span>
+                  <span className="grid h-8 w-8 place-items-center rounded-md bg-white/20 text-lg">+</span>
+                </button>
+                <button
+                  onClick={() => chooseMode('join')}
+                  className="group flex w-full items-center justify-between rounded-lg border border-emerald-300/30 bg-emerald-500 px-4 py-4 text-left font-bold text-zinc-950 shadow-lg shadow-emerald-950/25 transition hover:bg-emerald-400 active:scale-[0.98]"
+                >
+                  <span>Join Room</span>
+                  <span className="grid h-8 w-8 place-items-center rounded-md bg-zinc-950/10 text-lg">→</span>
+                </button>
+              </div>
+            )}
 
-          {mode === 'join' && (
-            <motion.form
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              onSubmit={handleJoin}
-              className="space-y-4"
-            >
-              <button
-                type="button"
-                onClick={() => setMode('none')}
-                className="text-white/50 hover:text-white text-sm flex items-center gap-1 mb-2 transition"
+            {mode === 'create' && (
+              <motion.form
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                onSubmit={handleCreate}
+                className="space-y-4"
               >
-                ← Back
-              </button>
-              <h2 className="text-white font-bold text-xl">Join a Room</h2>
-              <input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={20}
-                autoFocus
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3
-                           text-white placeholder-white/30 outline-none
-                           focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 transition"
-              />
-              <input
-                type="text"
-                placeholder="Room code (6 letters)"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
-                maxLength={6}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3
-                           text-white placeholder-white/30 outline-none font-mono text-xl tracking-[0.2em]
-                           focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 transition"
-              />
-              <button
-                type="submit"
-                disabled={!name.trim() || code.length < 6 || loading}
-                className={`w-full py-3 rounded-xl font-bold text-white text-base transition-all
-                  ${name.trim() && code.length >= 6 && !loading
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95'
-                    : 'bg-white/10 text-white/30 cursor-not-allowed'}`}
-              >
-                {loading ? 'Joining…' : '🚪 Join Room'}
-              </button>
-            </motion.form>
-          )}
-        </motion.div>
+                <button
+                  type="button"
+                  onClick={() => chooseMode('none')}
+                  className="text-sm font-semibold text-white/55 transition hover:text-white"
+                >
+                  Back
+                </button>
+                <div>
+                  <h2 className="text-2xl font-black text-white">Create Room</h2>
+                  <p className="mt-1 text-sm text-white/55">Your name appears on the board.</p>
+                </div>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-white/70">Name</span>
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={20}
+                    autoFocus
+                    className="w-full rounded-lg border border-white/15 bg-white px-4 py-3 text-base font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-red-300 focus:ring-4 focus:ring-red-400/20"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={!name.trim() || loading}
+                  className={`w-full rounded-lg px-4 py-3 font-black text-white shadow-lg transition active:scale-[0.98]
+                    ${name.trim() && !loading
+                      ? 'bg-red-500 shadow-red-950/30 hover:bg-red-400'
+                      : 'cursor-not-allowed bg-white/10 text-white/35 shadow-none'}`}
+                >
+                  {loading ? 'Creating...' : 'Create Room'}
+                </button>
+              </motion.form>
+            )}
 
-        {/* Feature callouts */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-6 grid grid-cols-2 gap-3 text-center"
-        >
-          {[
-            ['🎲', '3D Dice'],
-            ['🔊', 'Sound FX'],
-            ['😂', 'Emoji Reactions'],
-            ['⚡', 'Real-time'],
-          ].map(([icon, label]) => (
-            <div key={label}
-              className="bg-white/5 border border-white/10 rounded-xl py-2.5 text-white/60 text-sm">
-              {icon} {label}
-            </div>
-          ))}
-        </motion.div>
+            {mode === 'join' && (
+              <motion.form
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                onSubmit={handleJoin}
+                className="space-y-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => chooseMode('none')}
+                  className="text-sm font-semibold text-white/55 transition hover:text-white"
+                >
+                  Back
+                </button>
+                <div>
+                  <h2 className="text-2xl font-black text-white">Join Room</h2>
+                  <p className="mt-1 text-sm text-white/55">Enter the six-character code.</p>
+                </div>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-white/70">Name</span>
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={20}
+                    autoFocus
+                    className="w-full rounded-lg border border-white/15 bg-white px-4 py-3 text-base font-semibold text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-400/20"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-white/70">Room Code</span>
+                  <input
+                    type="text"
+                    placeholder="ABC123"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
+                    maxLength={6}
+                    className="w-full rounded-lg border border-white/15 bg-white px-4 py-3 font-mono text-xl font-black text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-400/20"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={!name.trim() || code.length < 6 || loading}
+                  className={`w-full rounded-lg px-4 py-3 font-black shadow-lg transition active:scale-[0.98]
+                    ${name.trim() && code.length >= 6 && !loading
+                      ? 'bg-emerald-400 text-zinc-950 shadow-emerald-950/25 hover:bg-emerald-300'
+                      : 'cursor-not-allowed bg-white/10 text-white/35 shadow-none'}`}
+                >
+                  {loading ? 'Joining...' : 'Join Room'}
+                </button>
+              </motion.form>
+            )}
+          </motion.section>
+        </div>
       </div>
-    </div>
+      <Notifications />
+    </main>
   )
 }

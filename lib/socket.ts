@@ -6,6 +6,18 @@ export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 let socket: GameSocket | null = null
 
+function getDefaultSocketUrl(): string {
+  if (typeof window === 'undefined') return 'http://localhost:3001'
+
+  const { protocol, hostname, port, origin } = window.location
+  if (process.env.NODE_ENV === 'development') {
+    const devPort = port === '3000' ? '3001' : port || '3001'
+    return `${protocol}//${hostname}:${devPort}`
+  }
+
+  return origin
+}
+
 export function getSocket(sessionToken: string): GameSocket {
   if (socket && socket.connected) return socket
 
@@ -14,10 +26,7 @@ export function getSocket(sessionToken: string): GameSocket {
     socket = null
   }
 
-  // In dev, connect to the separate socket server (port 3001).
-  // In production (unified server), connect to the same origin.
-  const url = process.env.NEXT_PUBLIC_SOCKET_URL
-    ?? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001')
+  const url = process.env.NEXT_PUBLIC_SOCKET_URL || getDefaultSocketUrl()
 
   socket = io(url, {
     auth: { sessionToken },

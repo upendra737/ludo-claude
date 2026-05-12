@@ -47,8 +47,8 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
   const currentPlayer = gameState.players.find((p) => p.id === gameState.currentTurn)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950
-                    flex flex-col lg:flex-row items-center justify-center gap-4 p-4 select-none">
+    <div className="game-shell min-h-screen select-none p-4 text-white">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-7xl flex-col items-center justify-center gap-4 lg:flex-row">
 
       {/* ── Left panel: players (desktop) ── */}
       <div className="hidden lg:flex flex-col gap-3 w-56">
@@ -67,7 +67,7 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
       {/* ── Board ── */}
       <div className="relative flex flex-col items-center gap-4">
         {/* Current turn banner */}
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-lg border border-white/15 bg-zinc-950/80 p-2 shadow-xl shadow-black/25 backdrop-blur">
           {gameState.players.map((p) => (
             <PlayerCard key={p.id} player={p}
               isCurrentTurn={gameState.currentTurn === p.id}
@@ -77,7 +77,7 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
         </div>
 
         {/* Board with tokens */}
-        <div className="relative w-full" style={{ maxWidth: 580 }}>
+        <div className="relative w-full rounded-lg border border-white/15 bg-white p-2 shadow-2xl shadow-black/35" style={{ maxWidth: 620 }}>
           <LudoBoard>
             {/* Render tokens grouped by position */}
             {Array.from(groups.entries()).flatMap(([_pos, items]) =>
@@ -104,9 +104,9 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
         </div>
 
         {/* Bottom controls row */}
-        <div className="flex items-center justify-between w-full px-2 gap-4">
+        <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-lg border border-white/15 bg-zinc-950/80 p-3 shadow-xl shadow-black/25 backdrop-blur">
           {/* Consecutive sixes indicator */}
-          <div className="flex gap-1">
+          <div className="flex gap-1 justify-self-start">
             {[1, 2].map((n) => (
               <div
                 key={n}
@@ -127,10 +127,10 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
           {/* Dice */}
           <div className="flex flex-col items-center">
             {isMyTurn && !hasRolled && (
-              <p className="text-emerald-400 text-xs font-bold mb-1 animate-pulse">Your turn!</p>
+              <p className="text-emerald-300 text-xs font-black mb-1">Your Turn</p>
             )}
             {!isMyTurn && currentPlayer && (
-              <p className="text-white/40 text-xs mb-1">
+              <p className="text-white/50 text-xs font-semibold mb-1">
                 {currentPlayer.name}&apos;s turn
               </p>
             )}
@@ -141,12 +141,14 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
               onRoll={onRoll}
             />
             {isMyTurn && hasRolled && (gameState.validMoves?.length ?? 0) > 0 && (
-              <p className="text-yellow-400 text-xs mt-1 animate-pulse">Pick a token ↑</p>
+              <p className="text-yellow-300 text-xs font-black mt-1">Move Token</p>
             )}
           </div>
 
           {/* Emoji panel */}
-          <EmojiPanel onSend={onSendEmoji} />
+          <div className="justify-self-end">
+            <EmojiPanel onSend={onSendEmoji} />
+          </div>
         </div>
       </div>
 
@@ -162,6 +164,7 @@ export function GameBoard({ onRoll, onMoveToken, onSendEmoji }: GameBoardProps) 
               isMe={player.id === myPlayerId}
             />
           ))}
+      </div>
       </div>
     </div>
   )

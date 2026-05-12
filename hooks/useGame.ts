@@ -12,6 +12,7 @@ import {
   playEmojiSound,
   playTease,
   playTokenHome,
+  unlockAudio,
 } from '@/lib/audio'
 import { generateSessionToken } from '@/lib/sessionToken'
 
@@ -25,6 +26,10 @@ function getOrCreateSessionToken(): string {
     localStorage.setItem(key, token)
   }
   return token
+}
+
+function notifyError(message: string) {
+  useGameStore.getState().addNotification({ message, type: 'error' })
 }
 
 export function useGame() {
@@ -41,10 +46,23 @@ export function useGame() {
 
     // ── Server → Client events ──────────────────────────────────────────────
 
-    socket.on('room-created', ({ code, player, sessionToken }) => {
+    socket.on('connect_error', (error) => {
+      notifyError(`Could not connect to the game server: ${error.message}`)
+    })
+
+    socket.on('disconnect', (reason) => {
+      if (reason === 'io client disconnect') return
+      useGameStore.getState().addNotification({
+        message: 'Disconnected from the game server. Reconnecting...',
+        type: 'error',
+      })
+    })
+
+    socket.on('room-created', ({ code, player, sessionToken, gameState }) => {
       store.setMyPlayerId(player.id)
       store.setRoomCode(code)
       if (sessionToken) localStorage.setItem('ludo_session_token', sessionToken)
+      store.setGameState(gameState)
       store.setPhase('lobby')
       router.push(`/room/${code}`)
     })
@@ -231,6 +249,8 @@ export function useGame() {
       socket.off('host-transferred')
       socket.off('emoji-received')
       socket.off('room-error')
+      socket.off('connect_error')
+      socket.off('disconnect')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -238,41 +258,59 @@ export function useGame() {
   // ── Client → Server actions ─────────────────────────────────────────────────
 
   const createRoom = useCallback((name: string) => {
+    void unlockAudio()
     const socket = socketRef.current
     const sessionToken = useGameStore.getState().sessionToken
-    if (!socket || !sessionToken) return
+    if (!socket || !sessionToken) {
+      notifyError('Game connection is not ready yet. Please try again.')
+      return false
+    }
+    if (!socket.connected) socket.connect()
     socket.emit('create-room', { name, sessionToken })
+    return true
   }, [])
 
   const joinRoom = useCallback((code: string, name: string) => {
+    void unlockAudio()
     const socket = socketRef.current
     const sessionToken = useGameStore.getState().sessionToken
-    if (!socket || !sessionToken) return
+    if (!socket || !sessionToken) {
+      notifyError('Game connection is not ready yet. Please try again.')
+      return false
+    }
+    if (!socket.connected) socket.connect()
     socket.emit('join-room', { code: code.toUpperCase(), name, sessionToken })
+    return true
   }, [])
 
   const rejoinRoom = useCallback((code: string) => {
     const socket = socketRef.current
     const sessionToken = useGameStore.getState().sessionToken
     if (!socket || !sessionToken) return
+    if (!socket.connected) socket.connect()
     socket.emit('rejoin-room', { code, sessionToken })
   }, [])
 
   const setReady = useCallback(() => {
+    void unlockAudio()
     const socket = socketRef.current
     const roomCode = useGameStore.getState().roomCode
     if (!socket || !roomCode) return
+    if (!socket.connected) socket.connect()
     socket.emit('player-ready', { roomCode })
   }, [])
 
   const startGame = useCallback(() => {
+    void unlockAudio()
     const socket = socketRef.current
     const roomCode = useGameStore.getState().roomCode
     if (!socket || !roomCode) return
+    if (!socket.connected) socket.connect()
     socket.emit('start-game', { roomCode })
   }, [])
 
   const rollDice = useCallback(() => {
+    void unlockAudio()
     const socket = socketRef.current
     const roomCode = useGameStore.getState().roomCode
     const gs = useGameStore.getState().gameState
@@ -280,20 +318,25 @@ export function useGame() {
     if (!socket || !roomCode || !gs) return
     if (gs.currentTurn !== myId) return
     if (gs.lastDiceValue !== null) return
+    if (!socket.connected) socket.connect()
     socket.emit('roll-dice', { roomCode })
   }, [])
 
   const moveToken = useCallback((tokenId: string) => {
+    void unlockAudio()
     const socket = socketRef.current
     const roomCode = useGameStore.getState().roomCode
     if (!socket || !roomCode) return
+    if (!socket.connected) socket.connect()
     socket.emit('move-token', { roomCode, tokenId })
   }, [])
 
   const sendEmoji = useCallback((emoji: string) => {
+    void unlockAudio()
     const socket = socketRef.current
     const roomCode = useGameStore.getState().roomCode
     if (!socket || !roomCode) return
+    if (!socket.connected) socket.connect()
     socket.emit('send-emoji', { roomCode, emoji })
     // Play own sound immediately (don't wait for server echo)
     playEmojiSound(emoji)

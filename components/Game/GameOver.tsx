@@ -37,8 +37,7 @@ export function GameOver({ onPlayAgain }: GameOverProps) {
   const myPosition = gameState.players.find((p) => p.id === myPlayerId)?.finishPosition
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-indigo-950
-                    flex flex-col items-center justify-center p-6">
+    <div className="game-shell flex min-h-screen flex-col items-center justify-center p-6 text-white">
       {/* Title */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
@@ -49,7 +48,7 @@ export function GameOver({ onPlayAgain }: GameOverProps) {
         <div className="text-6xl mb-3">
           {myPosition === 1 ? '🏆' : myPosition === 2 ? '🥈' : '🎮'}
         </div>
-        <h1 className="text-4xl font-black text-white mb-2">Game Over!</h1>
+        <h1 className="text-4xl font-black text-white mb-2">Game Over</h1>
         {myPosition === 1 && (
           <p className="text-yellow-400 font-bold text-xl">You won! 🎉</p>
         )}
@@ -71,20 +70,20 @@ export function GameOver({ onPlayAgain }: GameOverProps) {
               initial={{ x: -40, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: idx * 0.12, type: 'spring', stiffness: 260, damping: 22 }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2
-                ${isMe ? 'ring-2 ring-yellow-400' : ''}`}
-              style={{ borderColor: c.dark, background: `${c.bg}22` }}
+              className={`flex items-center gap-3 rounded-lg border-2 bg-white px-4 py-3 text-zinc-950 shadow-lg shadow-black/20
+                ${isMe ? 'ring-2 ring-yellow-300' : ''}`}
+              style={{ borderColor: c.dark }}
             >
               <span className="text-2xl w-8 text-center">{MEDALS[pos - 1] ?? '🏅'}</span>
               <div
                 className="w-4 h-4 rounded-full border-2 shrink-0"
                 style={{ background: c.bg, borderColor: c.dark }}
               />
-              <span className="font-bold text-white flex-1">
+              <span className="font-bold text-zinc-950 flex-1">
                 {player.name}
-                {isMe && <span className="text-white/40 text-xs font-normal ml-1">(you)</span>}
+                {isMe && <span className="text-zinc-500 text-xs font-normal ml-1">(you)</span>}
               </span>
-              <span className="text-white/50 text-sm">{MEDAL_LABELS[pos - 1]}</span>
+              <span className="text-zinc-500 text-sm">{MEDAL_LABELS[pos - 1]}</span>
             </motion.div>
           )
         })}
@@ -96,10 +95,7 @@ export function GameOver({ onPlayAgain }: GameOverProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5 }}
         onClick={onPlayAgain}
-        className="px-8 py-3 rounded-xl font-bold text-white text-base
-                   bg-gradient-to-r from-indigo-500 to-purple-600
-                   hover:from-indigo-400 hover:to-purple-500
-                   active:scale-95 transition-all shadow-xl"
+        className="rounded-lg bg-red-500 px-8 py-3 text-base font-black text-white shadow-xl shadow-red-950/30 transition hover:bg-red-400 active:scale-95"
       >
         🏠 Back to Home
       </motion.button>

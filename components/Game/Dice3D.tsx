@@ -84,7 +84,7 @@ export function Dice3D({ value, rolling, canRoll, onRoll }: Dice3DProps) {
         style={{ perspective: 400, width: size, height: size }}
         className={canRoll && !rolling ? 'cursor-pointer hover:scale-110 transition-transform' : ''}
         onClick={canRoll && !rolling ? onRoll : undefined}
-        title={canRoll ? 'Click to roll' : ''}
+        title={canRoll ? 'Roll' : ''}
       >
         <motion.div
           animate={{ rotateX: rotX, rotateY: rotY }}
@@ -110,10 +110,10 @@ export function Dice3D({ value, rolling, canRoll, onRoll }: Dice3DProps) {
       </div>
 
       {canRoll && !rolling && (
-        <span className="text-xs text-white/60 animate-pulse">tap to roll</span>
+        <span className="text-xs font-black text-emerald-300">Roll</span>
       )}
       {rolling && (
-        <span className="text-xs text-white/60">Rolling…</span>
+        <span className="text-xs font-black text-white/60">Rolling...</span>
       )}
       {value !== null && !rolling && !canRoll && (
         <span className="text-2xl font-bold text-white drop-shadow">{value}</span>

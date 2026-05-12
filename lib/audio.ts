@@ -10,6 +10,24 @@ function getCtx(): AudioContext {
   return ctx
 }
 
+export async function unlockAudio() {
+  if (typeof window === 'undefined') return
+
+  const ac = getCtx()
+  if (ac.state === 'suspended') {
+    await ac.resume().catch(() => undefined)
+  }
+
+  const t = ac.currentTime
+  const osc = ac.createOscillator()
+  const g = ac.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.03)
+  osc.connect(g).connect(ac.destination)
+  osc.start(t)
+  osc.stop(t + 0.03)
+}
+
 function gain(ac: AudioContext, value: number, at: number, decayTo = 0, decayAt?: number): GainNode {
   const g = ac.createGain()
   g.gain.setValueAtTime(value, at)

@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
 
 const TYPE_STYLE: Record<string, string> = {
-  info:        'bg-gray-800/90 border-gray-600',
-  capture:     'bg-red-900/90 border-red-500',
-  'triple-six': 'bg-purple-900/90 border-purple-400',
-  win:         'bg-yellow-700/90 border-yellow-400',
-  turn:        'bg-emerald-800/90 border-emerald-400',
-  error:       'bg-red-800/90 border-red-400',
+  info:        'bg-zinc-950/95 border-white/15',
+  capture:     'bg-red-950/95 border-red-400',
+  'triple-six': 'bg-zinc-950/95 border-yellow-300',
+  win:         'bg-yellow-500 border-yellow-200 text-zinc-950',
+  turn:        'bg-emerald-500 border-emerald-200 text-zinc-950',
+  error:       'bg-red-600 border-red-200',
 }
 
 const TYPE_ICON: Record<string, string> = {
@@ -29,7 +29,7 @@ export function Notifications() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 80, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-white text-sm
+            className={`flex items-start gap-2 px-3 py-2.5 rounded-lg border text-white text-sm
                         shadow-2xl backdrop-blur-sm pointer-events-auto cursor-pointer
                         ${TYPE_STYLE[n.type] ?? TYPE_STYLE.info}`}
             onClick={() => remove(n.id)}
