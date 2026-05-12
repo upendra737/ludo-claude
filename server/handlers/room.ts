@@ -27,6 +27,31 @@ import { randomUUID } from "crypto"
 type IoServer = Server<any, any, any, SocketData>
 type IoSocket = Socket<any, any, any, SocketData>
 
+async function sessionTokenExists(sessionToken: string): Promise<boolean> {
+  const existing = await db
+    .select({ id: players.id })
+    .from(players)
+    .where(eq(players.sessionToken, sessionToken))
+    .limit(1)
+
+  return existing.length > 0
+}
+
+async function getAvailableSessionToken(preferredToken: string): Promise<string> {
+  if (!(await sessionTokenExists(preferredToken))) return preferredToken
+
+  for (let i = 0; i < 5; i++) {
+    const nextToken = generateServerSessionToken()
+    if (!(await sessionTokenExists(nextToken))) return nextToken
+  }
+
+  return generateServerSessionToken()
+}
+
+function generateServerSessionToken(): string {
+  return randomUUID().replaceAll("-", "").slice(0, 21)
+}
+
 export async function handleCreateRoom(
   io: IoServer,
   socket: IoSocket,
@@ -49,9 +74,10 @@ export async function handleCreateRoom(
     return
   }
 
-  const { name, sessionToken } = result.data
+  const { name, sessionToken: requestedSessionToken } = result.data
 
   try {
+    const sessionToken = await getAvailableSessionToken(requestedSessionToken)
     const code = await generateUniqueRoomCode()
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000)
     const playerId = randomUUID()
@@ -153,7 +179,7 @@ export async function handleJoinRoom(
     return
   }
 
-  const { code, name, sessionToken } = result.data
+  const { code, name, sessionToken: requestedSessionToken } = result.data
 
   try {
     const [room] = await db
@@ -192,13 +218,14 @@ export async function handleJoinRoom(
     }
 
     const alreadyJoined = existingPlayers.find(
-      (p) => p.sessionToken === sessionToken
+      (p) => p.sessionToken === requestedSessionToken
     )
     if (alreadyJoined) {
-      await handleRejoinRoom(io, socket, { code, sessionToken })
+      await handleRejoinRoom(io, socket, { code, sessionToken: requestedSessionToken })
       return
     }
 
+    const sessionToken = await getAvailableSessionToken(requestedSessionToken)
     const usedSlots = existingPlayers.map((p) => p.slot)
     const nextSlot = ([1, 2, 3, 4] as const).find(
       (s) => !usedSlots.includes(s)

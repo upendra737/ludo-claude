@@ -28,6 +28,19 @@ function getOrCreateSessionToken(): string {
   return token
 }
 
+function createNewSessionToken(): string {
+  const token = generateSessionToken()
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('ludo_session_token', token)
+  }
+  useGameStore.getState().setSessionToken(token)
+  return token
+}
+
+function setSocketSessionToken(socket: GameSocket, sessionToken: string) {
+  socket.auth = { sessionToken }
+}
+
 function notifyError(message: string) {
   useGameStore.getState().addNotification({ message, type: 'error' })
 }
@@ -61,7 +74,10 @@ export function useGame() {
     socket.on('room-created', ({ code, player, sessionToken, gameState }) => {
       store.setMyPlayerId(player.id)
       store.setRoomCode(code)
-      if (sessionToken) localStorage.setItem('ludo_session_token', sessionToken)
+      if (sessionToken) {
+        localStorage.setItem('ludo_session_token', sessionToken)
+        store.setSessionToken(sessionToken)
+      }
       store.setGameState(gameState)
       store.setPhase('lobby')
       router.push(`/room/${code}`)
@@ -70,7 +86,10 @@ export function useGame() {
     socket.on('room-joined', ({ player, sessionToken, gameState }) => {
       store.setMyPlayerId(player.id)
       store.setRoomCode(gameState.roomCode)
-      if (sessionToken) localStorage.setItem('ludo_session_token', sessionToken)
+      if (sessionToken) {
+        localStorage.setItem('ludo_session_token', sessionToken)
+        store.setSessionToken(sessionToken)
+      }
       store.setGameState(gameState)
       store.setPhase(gameState.status === 'active' ? 'playing' : 'lobby')
     })
@@ -260,11 +279,12 @@ export function useGame() {
   const createRoom = useCallback((name: string) => {
     void unlockAudio()
     const socket = socketRef.current
-    const sessionToken = useGameStore.getState().sessionToken
+    const sessionToken = createNewSessionToken()
     if (!socket || !sessionToken) {
       notifyError('Game connection is not ready yet. Please try again.')
       return false
     }
+    setSocketSessionToken(socket, sessionToken)
     if (!socket.connected) socket.connect()
     socket.emit('create-room', { name, sessionToken })
     return true
@@ -273,11 +293,12 @@ export function useGame() {
   const joinRoom = useCallback((code: string, name: string) => {
     void unlockAudio()
     const socket = socketRef.current
-    const sessionToken = useGameStore.getState().sessionToken
+    const sessionToken = createNewSessionToken()
     if (!socket || !sessionToken) {
       notifyError('Game connection is not ready yet. Please try again.')
       return false
     }
+    setSocketSessionToken(socket, sessionToken)
     if (!socket.connected) socket.connect()
     socket.emit('join-room', { code: code.toUpperCase(), name, sessionToken })
     return true
